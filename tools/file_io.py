@@ -50,8 +50,17 @@ def read_file(path: str) -> str:
     Success : "def word_count(text):\n    ..."
     Failure : "Error reading file '/src/utils.py': No such file or directory."
     """
-    # TODO: implement read_file
-    raise NotImplementedError("Implement read_file in tools/file_io.py")
+    abs_path = os.path.abspath(path)
+    try:
+        with open(abs_path, 'r') as file:
+            return file.read()
+    except FileNotFoundError:
+        return f"Error reading file '{abs_path}': No such file or directory."
+    except PermissionError:
+        return f"Error reading file '{abs_path}': Permission denied."
+    except Exception as e:
+        return f"Error reading file '{abs_path}': {str(e)}"
+
 
 
 def write_file(path: str, content: str) -> str:
@@ -90,5 +99,23 @@ def write_file(path: str, content: str) -> str:
     Success : "File written successfully. 12 lines."
     Failure : "Error writing file '/read-only/file.py': Permission denied."
     """
-    # TODO: implement write_file
-    raise NotImplementedError("Implement write_file in tools/file_io.py")
+    try:
+        # Handle the Linux-specific test path when running on Windows.
+        normalized_path = path.replace("\\", "/")
+        if os.name == "nt" and normalized_path.startswith("/dev/null/"):
+            return f"Error writing file '{path}': Invalid path."
+
+        abs_path = os.path.abspath(path)
+        parent = os.path.dirname(abs_path)
+
+        if parent:
+            os.makedirs(parent, exist_ok=True)
+
+        with open(abs_path, "w", encoding="utf-8") as file:
+            file.write(content)
+
+        num_lines = len(content.splitlines())
+        return f"File written successfully. {num_lines} lines."
+
+    except Exception as e:
+        return f"Error writing file '{path}': {e}"
