@@ -24,7 +24,6 @@ import sys
 MAX_OUTPUT_CHARS = 2000
 MAX_TIMEOUT = 30
 
-
 def exec_python(path: str, timeout: int = 10) -> str:
     """
     Execute a Python script in a sandboxed subprocess.
@@ -75,5 +74,35 @@ def exec_python(path: str, timeout: int = 10) -> str:
     Timeout : "Error: script 'loop.py' exceeded timeout of 2s and was killed."
     Crash   : "Error (exit code 1):\\nTraceback (most recent call last):\\n  ..."
     """
-    # TODO: implement exec_python
-    raise NotImplementedError("Implement exec_python in tools/code_executor.py")
+    try:
+        effective_timeout = max(1, min(timeout, MAX_TIMEOUT))
+
+        result = subprocess.run(
+            [sys.executable, path],
+            capture_output=True,
+            text=True,
+            timeout=effective_timeout,
+            check=False,
+        )
+
+        if result.returncode != 0:
+            error_output = result.stderr or result.stdout or "No error output."
+            output = (
+                f"Error (exit code {result.returncode}):\n"
+                f"{error_output}"
+            )
+        else:
+            output = result.stdout
+
+        if len(output) > MAX_OUTPUT_CHARS:
+            output = output[:MAX_OUTPUT_CHARS] + "\n[output truncated]"
+
+        return output
+
+    except subprocess.TimeoutExpired:
+        return (
+            f"Error: script '{path}' exceeded timeout of "
+            f"{effective_timeout}s and was killed."
+        )
+    except Exception as e:
+        return f"Error executing script '{path}': {e}"
