@@ -123,12 +123,12 @@ class TestWriteExecReadRoundtrip:
 
         script_path = str(tmp_path / "word_count.py")
         output_path = str(tmp_path / "result.txt")
-
+        output_path_for_script = output_path.replace("\\", "/") # Added to fix Windows path issues in the script
         script = (
             "from collections import Counter\n"
             "words = 'the quick brown fox jumps over the lazy dog'.split()\n"
             "counts = Counter(words)\n"
-            f"with open('{output_path}', 'w') as f:\n"
+            f"with open('{output_path_for_script}', 'w') as f:\n"
             "    for word, count in sorted(counts.items()):\n"
             "        f.write(f'{word}: {count}\\n')\n"
             "print('Word count written.')\n"
